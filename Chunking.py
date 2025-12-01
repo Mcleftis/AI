@@ -9,8 +9,9 @@ tagged=pos_tag(tokens)
 
 grammar="NP:{<DT>?<JJ>*<NN>}"
 
-dunk_parser=RegexpParser(grammar)
+chunk_parser=RegexpParser(grammar)
 
-tree=chunk_parser.parser(tagged)
+tree=chunk_parser.parse(tagged)
+
 
 tree.draw()
