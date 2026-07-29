@@ -621,7 +621,8 @@ internal class TcpSession(
         const val RECV_BUFFER = 64 * 1024
 
         const val READ_CHUNK = 32 * 1024
-        const val SNIFF_LIMIT = 4096
+        /** Headroom for a ClientHello: post-quantum key shares push these past 2 KB. */
+        const val SNIFF_LIMIT = 8192
         const val SNIFF_HOLD_MS = 400L
 
         const val PORT_HTTP = 80
