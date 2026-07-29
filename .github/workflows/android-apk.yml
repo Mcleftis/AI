@@ -1,0 +1,77 @@
+name: Build TikSaver APK
+
+on:
+  push:
+    branches:
+      - claude/tiktok-data-consumption-l8kg9a
+    paths:
+      - 'android/**'
+      - '.github/workflows/android-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tiksaver-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Assemble release APK
+        working-directory: android
+        run: ./gradlew --no-daemon --stacktrace assembleRelease
+
+      - name: Stage APK
+        id: stage
+        run: |
+          set -euo pipefail
+          apk=$(find android/app/build/outputs/apk/release -name '*.apk' | head -1)
+          test -n "$apk"
+          mkdir -p dist
+          cp "$apk" dist/TikSaver.apk
+          echo "size=$(du -h dist/TikSaver.apk | cut -f1)" >> "$GITHUB_OUTPUT"
+          ls -la dist
+
+      - name: Verify signature
+        run: |
+          set -euo pipefail
+          build_tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$build_tools/apksigner" verify --verbose --print-certs dist/TikSaver.apk
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TikSaver-apk
+          path: dist/TikSaver.apk
+          if-no-files-found: error
+
+      - name: Publish to the rolling release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag=tiksaver-latest
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" \
+              --title "TikSaver — latest build" \
+              --notes "Sideload build of the TikTok data shaper. Signed with the throwaway key in android/keystore/." \
+              --target "$GITHUB_SHA"
+          fi
+          gh release upload "$tag" dist/TikSaver.apk --clobber
+          echo "Download: $(gh release view "$tag" --json url --jq .url)"

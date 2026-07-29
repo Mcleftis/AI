@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="status_off">Ανενεργό</string>
+    <string name="status_on">Ενεργό</string>
+    <string name="status_paused_wifi">Σε παύση — είσαι σε Wi‑Fi</string>
+    <string name="status_starting">Ξεκινάει…</string>
+    <string name="btn_start">Έναρξη</string>
+    <string name="btn_stop">Διακοπή</string>
+
+    <string name="speed_title">Όριο ταχύτητας</string>
+    <string name="speed_hint">Χαμηλότερο όριο = το TikTok διαλέγει χαμηλότερη ποιότητα βίντεο = πολύ λιγότερα megabyte.</string>
+    <string name="preset_extreme">Ακραίο</string>
+    <string name="preset_saver">Οικονομία</string>
+    <string name="preset_balanced">Ισορροπία</string>
+    <string name="preset_light">Ελαφρύ</string>
+    <string name="budget_fmt">%1$d kbps → το πολύ %2$s ανά λεπτό</string>
+
+    <string name="upload_title">Όριο upload</string>
+
+    <string name="options_title">Επιλογές</string>
+    <string name="opt_cellular_only">Μόνο σε δεδομένα κινητής</string>
+    <string name="opt_cellular_only_sub">Στο Wi‑Fi η κίνηση περνάει ανέγγιχτη.</string>
+    <string name="opt_block_quic">Επιβολή TCP (μπλοκ QUIC)</string>
+    <string name="opt_block_quic_sub">Απαραίτητο: η κίνηση QUIC του TikTok δεν μπορεί να περιοριστεί αλλιώς.</string>
+    <string name="opt_block_ads">Μπλοκ διαφημίσεων και τηλεμετρίας</string>
+    <string name="opt_block_ads_sub">Κόβει γνωστά endpoint διαφημίσεων, tracking και logs.</string>
+    <string name="opt_screen_off">Κόψιμο κίνησης με κλειστή οθόνη</string>
+    <string name="opt_screen_off_sub">Σταματάει το prefetch που δεν πρόκειται να δεις.</string>
+
+    <string name="apps_title">Εφαρμογές υπό έλεγχο</string>
+    <string name="apps_sub">%1$d επιλεγμένες</string>
+    <string name="apps_none">Καμία εφαρμογή επιλεγμένη — δεν θα περιοριστεί τίποτα.</string>
+    <string name="apps_missing">Δεν βρέθηκε TikTok στη συσκευή. Διάλεξε εφαρμογές χειροκίνητα.</string>
+
+    <string name="stats_title">Τρέχουσα συνεδρία</string>
+    <string name="stats_down">Λήψη</string>
+    <string name="stats_up">Αποστολή</string>
+    <string name="stats_blocked">Μπλοκαρίστηκαν</string>
+    <string name="stats_rate">Τρέχων ρυθμός</string>
+    <string name="stats_conns">Συνδέσεις</string>
+    <string name="stats_reset">Μηδενισμός μετρητών</string>
+
+    <string name="notif_channel">Κατάσταση περιορισμού</string>
+    <string name="notif_title">Το TikSaver τρέχει</string>
+    <string name="notif_text">όριο %1$s · %2$s λήψη · %3$s αποστολή</string>
+    <string name="notif_stop">Διακοπή</string>
+
+    <string name="vpn_denied">Δεν δόθηκε άδεια VPN — δεν μπορεί να τρέξει.</string>
+    <string name="vpn_unsupported">Η συσκευή δεν επιτρέπει εφαρμογές VPN.</string>
+</resources>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TikSaver</string>
+
+    <string name="status_off">Shaping off</string>
+    <string name="status_on">Shaping active</string>
+    <string name="status_paused_wifi">Paused — on Wi‑Fi</string>
+    <string name="status_starting">Starting…</string>
+    <string name="btn_start">Start</string>
+    <string name="btn_stop">Stop</string>
+
+    <string name="speed_title">Speed cap</string>
+    <string name="speed_hint">Lower cap = TikTok picks a lower video quality = far fewer megabytes.</string>
+    <string name="preset_extreme">Extreme</string>
+    <string name="preset_saver">Saver</string>
+    <string name="preset_balanced">Balanced</string>
+    <string name="preset_light">Light</string>
+    <string name="budget_fmt">%1$d kbps → at most %2$s per minute</string>
+
+    <string name="upload_title">Upload cap</string>
+
+    <string name="options_title">Options</string>
+    <string name="opt_cellular_only">Only shape on mobile data</string>
+    <string name="opt_cellular_only_sub">Pass through untouched while on Wi‑Fi.</string>
+    <string name="opt_block_quic">Force TCP (block QUIC)</string>
+    <string name="opt_block_quic_sub">Required: TikTok’s QUIC traffic cannot be shaped otherwise.</string>
+    <string name="opt_block_ads">Block ads and telemetry</string>
+    <string name="opt_block_ads_sub">Drops known ad, tracking and log endpoints by hostname.</string>
+    <string name="opt_screen_off">Cut traffic while the screen is off</string>
+    <string name="opt_screen_off_sub">Stops background prefetch you will never watch.</string>
+
+    <string name="apps_title">Shaped apps</string>
+    <string name="apps_sub">%1$d selected</string>
+    <string name="apps_none">No app selected — nothing will be shaped.</string>
+    <string name="apps_missing">TikTok was not found on this device. Pick the apps to shape manually.</string>
+
+    <string name="stats_title">This session</string>
+    <string name="stats_down">Downloaded</string>
+    <string name="stats_up">Uploaded</string>
+    <string name="stats_blocked">Blocked</string>
+    <string name="stats_rate">Current rate</string>
+    <string name="stats_conns">Connections</string>
+    <string name="stats_reset">Reset counters</string>
+
+    <string name="notif_channel">Shaping status</string>
+    <string name="notif_title">TikSaver active</string>
+    <string name="notif_text">%1$s cap · %2$s down · %3$s up</string>
+    <string name="notif_stop">Stop</string>
+
+    <string name="vpn_denied">VPN permission denied — shaping cannot run.</string>
+    <string name="vpn_unsupported">This device does not allow VPN apps.</string>
+</resources>
