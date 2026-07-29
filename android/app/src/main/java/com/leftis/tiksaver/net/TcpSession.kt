@@ -54,7 +54,17 @@ internal class TcpSession(
     /** Next sequence number we expect from the app. */
     private var recvNext: Long = 0
 
+    /** Where [recvNext] started, so a repeated SYN can be told from a new one. */
+    private var initialRecvNext: Long = 0
+
     private var appWindow: Int = 65535
+
+    /**
+     * Last window we told the app about. When it drops to zero we have to
+     * volunteer an update once space frees up, or the connection sits idle
+     * until the app's persist timer probes us.
+     */
+    private var lastAdvertisedWindow: Int = 0
 
     private val pendingToRemote = ArrayDeque<ByteBuffer>()
     private var pendingToRemoteBytes = 0
@@ -74,6 +84,7 @@ internal class TcpSession(
 
     private var sniffBuffer: ByteArray? = null
     private var sniffLength = 0
+    private var sniffStartedAt = 0L
     private var hostResolved = false
 
     private var lastActivity = SystemClock.elapsedRealtime()
@@ -83,9 +94,13 @@ internal class TcpSession(
 
     // -- lifecycle -----------------------------------------------------------
 
+    /** True when [seq] is the SYN that opened this session, arriving again. */
+    fun isSynRetransmit(seq: Long): Boolean = seqDiff(seqAdd(seq, 1), initialRecvNext) == 0L
+
     /** Handles the initial SYN and kicks off the outbound connection. */
     fun open(clientSeq: Long, window: Int): Boolean {
         recvNext = seqAdd(clientSeq, 1)
+        initialRecvNext = recvNext
         appWindow = window
         return try {
             val ch = SocketChannel.open()
@@ -207,13 +222,35 @@ internal class TcpSession(
     private fun acceptFromApp(packet: ByteArray, offset: Int, length: Int) {
         Stats.addUp(length)
 
-        if (engine.config.blockAds && !hostResolved) {
+        if (shouldSniffHost() && !hostResolved) {
             if (bufferForHostCheck(packet, offset, length)) return
+        } else {
+            // Filtering was switched off mid-connection; do not strand whatever
+            // the sniffer was still holding.
+            releaseSniffBuffer()
         }
 
         val copy = ByteArray(length)
         System.arraycopy(packet, offset, copy, 0, length)
         enqueueToRemote(ByteBuffer.wrap(copy))
+    }
+
+    /**
+     * Only HTTP and HTTPS get held back for inspection. On any other port the
+     * server might be the one that speaks first, and buffering the client would
+     * deadlock the connection for a hostname we were never going to find.
+     */
+    private fun shouldSniffHost(): Boolean =
+        engine.config.blockAds && (key.dstPort == PORT_HTTPS || key.dstPort == PORT_HTTP)
+
+    /** Forwards anything the sniffer withheld and stops inspecting. */
+    private fun releaseSniffBuffer() {
+        val buf = sniffBuffer ?: return
+        val length = sniffLength
+        sniffBuffer = null
+        sniffLength = 0
+        hostResolved = true
+        if (length > 0) enqueueToRemote(ByteBuffer.wrap(buf, 0, length))
     }
 
     /**
@@ -226,6 +263,7 @@ internal class TcpSession(
         if (buf == null) {
             buf = ByteArray(SNIFF_LIMIT)
             sniffBuffer = buf
+            sniffStartedAt = SystemClock.elapsedRealtime()
         }
         val room = SNIFF_LIMIT - sniffLength
         val copyLen = min(room, length)
@@ -475,7 +513,16 @@ internal class TcpSession(
             return false
         }
 
+        // Never let the sniffer hold a stream hostage waiting for bytes that
+        // are not coming.
+        if (sniffBuffer != null && now - sniffStartedAt > SNIFF_HOLD_MS) releaseSniffBuffer()
+
         if (pendingToRemote.isNotEmpty()) flushToRemote()
+
+        // Volunteer a window update once we have drained enough to accept data
+        // again, rather than waiting for the app's persist timer.
+        if (lastAdvertisedWindow == 0 && currentWindow() > 0) sendAck()
+
         retransmitOldest(force = false)
 
         val idleLimit = if (finSentToApp || appFinReceived) CLOSING_TIMEOUT_MS else IDLE_TIMEOUT_MS
@@ -519,8 +566,11 @@ internal class TcpSession(
         return (min(appWindow, MAX_IN_FLIGHT) - inFlight).coerceAtLeast(0)
     }
 
-    private fun advertisedWindow(): Int =
+    private fun currentWindow(): Int =
         (RECV_BUFFER - pendingToRemoteBytes).coerceIn(0, 65535)
+
+    /** Records what we advertised, so [tick] can spot a window that reopened. */
+    private fun advertisedWindow(): Int = currentWindow().also { lastAdvertisedWindow = it }
 
     private fun updateInterest() {
         val k = selectionKey ?: return
@@ -572,6 +622,10 @@ internal class TcpSession(
 
         const val READ_CHUNK = 32 * 1024
         const val SNIFF_LIMIT = 4096
+        const val SNIFF_HOLD_MS = 400L
+
+        const val PORT_HTTP = 80
+        const val PORT_HTTPS = 443
 
         const val RTO_MS = 300L
         const val MAX_RETRIES = 6

@@ -103,7 +103,9 @@ internal class NatEngine(
 
     private fun readLoop() {
         val input = FileInputStream(tun.fileDescriptor)
-        val scratch = ByteArray(MTU)
+        // Comfortably larger than the MTU: a short read would silently truncate
+        // a packet, and a truncated packet is a corrupt one.
+        val scratch = ByteArray(READ_BUFFER)
         try {
             while (running) {
                 val n = input.read(scratch)
@@ -276,13 +278,20 @@ internal class NatEngine(
         val flags = ip.data.u8(t + 13)
 
         val key = FlowKey(Proto.TCP, ip.srcIp, srcPort, ip.dstIp, dstPort)
+        val isSyn = flags and Proto.SYN != 0 && flags and Proto.ACK == 0
+
         val existing = tcpSessions[key]
         if (existing != null) {
-            existing.onPacket(ip.data, t, transportLength)
-            return
+            // The app can reuse a source port. A SYN whose sequence number is
+            // not the one that opened this session is a genuinely new
+            // connection, not a retransmission, so retire the old one.
+            if (!isSyn || existing.isSynRetransmit(ip.data.u32(t + 4))) {
+                existing.onPacket(ip.data, t, transportLength)
+                return
+            }
+            existing.closeHard()
         }
 
-        val isSyn = flags and Proto.SYN != 0 && flags and Proto.ACK == 0
         if (!isSyn) {
             // Nothing here knows about this flow; tell the app to give up
             // instead of letting it retransmit into the void.
@@ -445,7 +454,7 @@ internal class NatEngine(
 
     private companion object {
         const val TAG = "TikSaver/engine"
-        const val MTU = 1500
+        const val READ_BUFFER = 32 * 1024
         const val TICK_MS = 50L
         const val MAX_BATCH = 256
         const val MAX_TCP_SESSIONS = 512
